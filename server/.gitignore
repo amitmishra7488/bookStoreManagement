@@ -1,0 +1,16 @@
+node_modules/
+
+# Ignore .env files containing sensitive information
+.env
+
+# Ignore local database files
+*.db
+
+# Ignore log files
+*.log
+
+# Ignore npm debug log
+npm-debug.log
+
+# Ignore Visual Studio Code files
+.vscode/
