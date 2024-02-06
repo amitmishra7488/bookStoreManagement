@@ -45,8 +45,8 @@ const sendEmail = async (email, name, message, subject) => {
     const mailOptions = {
       from: process.env.GMAILUSERNAME,
       to: email,
-      subject: `Otp Verification for track_us ${subject}`,
-      text: `${"Mail For Revenue"}`,
+      subject: `Otp Verification for book-store ${subject}`,
+      text: `${subject}`,
       html: emailTemaplate,
     };
 

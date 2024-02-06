@@ -187,15 +187,15 @@ return `
         </tr>
         <tr>
           <td>Revenue for Current Month</td>
-          <td>$${authorRevenue.currentMonthRevenue}</td>
+          <td>${authorRevenue.currentMonthRevenue}</td>
         </tr>
         <tr>
           <td>Revenue for Current Year</td>
-          <td>$${authorRevenue.currentYearRevenue}</td>
+          <td>${authorRevenue.currentYearRevenue}</td>
         </tr>
         <tr>
           <td>Total Revenue</td>
-          <td>$${authorRevenue.totalRevenue}</td>
+          <td>${authorRevenue.totalRevenue}</td>
         </tr>
       </table>
       <div>
@@ -203,7 +203,7 @@ return `
         <ul>
             <li>Book ID: ${purchaseHistory.bookId} </li>
             <li>User ID: ${purchaseHistory.userId} </li>
-            <li>Price: $${purchaseHistory.price} </li>
+            <li>Price: ${purchaseHistory.price} </li>
             <li>Quantity: ${purchaseHistory.quantity}</li>
             <li>PurchaseId: ${purchaseHistory.purchaseId}</li>
         </ul>
