@@ -139,6 +139,23 @@ async function sendEmailsWithDelay(message, users) {
 }
 
 
+const bookUrlGenerator = async (req, res) => {
+  try {
+    const { slug } = req.params; // Extracting the slug from req.params
+    const book = await BookModel.findOne({ slug }); // Find the book by slug
+    if (!book) {
+      // If book not found, return an error response
+      return res.status(404).json({ error: 'Book not found' });
+    }
+    // If book found, return the book data
+    res.status(200).json({title:book.title,description:book.description,price:book.price});
+  } catch (error) {
+    // Handle any errors
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 
 
 module.exports = launchBook;
@@ -147,5 +164,6 @@ module.exports = {
   launchBook,
   getBookForAuthor,
   getAuthorRevenue,
-  bookLaunchNotification
+  bookLaunchNotification,
+  bookUrlGenerator
 };
