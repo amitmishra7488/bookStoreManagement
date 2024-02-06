@@ -2,7 +2,6 @@ const nodemailer = require("nodemailer");
 require("dotenv").config();
 const {
   otpVerificationTemplate,
-  passwordChangedTemplate,
   authorRevenueTemplate,
 } = require("./mailTemplate.js");
 
@@ -17,10 +16,6 @@ const sendEmail = async (email, name, message, subject) => {
 
       case "Reset Password":
         emailTemaplate = otpVerificationTemplate(name, message);
-        break;
-
-      case "Password Changed":
-        emailTemaplate = passwordChangedTemplate(name, message);
         break;
       
       case "Revenue Generated":
@@ -45,7 +40,7 @@ const sendEmail = async (email, name, message, subject) => {
     const mailOptions = {
       from: process.env.GMAILUSERNAME,
       to: email,
-      subject: `Otp Verification for book-store ${subject}`,
+      subject: `Email Regarding ${subject}`,
       text: `${subject}`,
       html: emailTemaplate,
     };
