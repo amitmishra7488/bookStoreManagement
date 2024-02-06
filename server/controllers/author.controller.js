@@ -1,5 +1,6 @@
 const AuthorRevenueModel = require("../models/authorRevenueModel");
 const BookModel = require("../models/book.models");
+const UserModel = require("../models/user.model");
 const calculateTotalMonthlyAndYearlyRevenue = require("../utils/monthlyAndYearlyRevenue");
 
 const launchBook = async (req, res) => {
@@ -105,11 +106,46 @@ const calculateTotalRevenue = async (authorId) => {
   return books.reduce((acc, book) => acc + (book.sellCount * book.price), 0);
 };
 
+const bookLaunchNotification = async (req, res) => {
+  try {
+      const { message } = req.body;
+      const allUsers = await UserModel.find();
+
+      const batchSize = 2;
+      const batches = [];
+      for (let i = 0; i < allUsers.length; i += batchSize) {
+          batches.push(allUsers.slice(i, i + batchSize));
+      }
+
+      // Send emails in batches with a delay of 25 seconds
+      for (let batch of batches) {
+          await sendEmailsWithDelay(message, batch);
+          await new Promise(resolve => setTimeout(resolve, 30000)); // Delay for 25 seconds (25 seconds * 1000 milliseconds)
+      }
+
+      res.status(200).json("Notification Successfully Sent to all User");
+  } catch (error) {
+      console.error('Error sending notification:', error);
+      res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+async function sendEmailsWithDelay(message, users) {
+  try {
+      console.log(message, "sent to -->", users.map(user => user.email));
+  } catch (error) {
+      console.error('Error sending emails:', error);
+  }
+}
+
+
+
 
 module.exports = launchBook;
 
 module.exports = {
   launchBook,
   getBookForAuthor,
-  getAuthorRevenue
+  getAuthorRevenue,
+  bookLaunchNotification
 };

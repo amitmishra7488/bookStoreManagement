@@ -3,6 +3,7 @@ require("dotenv").config();
 const {
   otpVerificationTemplate,
   passwordChangedTemplate,
+  authorRevenueTemplate,
 } = require("./mailTemplate.js");
 
 // Function to send an email
@@ -21,7 +22,11 @@ const sendEmail = async (email, name, message, subject) => {
       case "Password Changed":
         emailTemaplate = passwordChangedTemplate(name, message);
         break;
-
+      
+      case "Revenue Generated":
+        const {authorRevenue, newPurchase} = message;
+        emailTemaplate = authorRevenueTemplate(name, authorRevenue, newPurchase);
+        break;
       default:
         throw new Error("Invalid actionType");
     }
@@ -41,7 +46,7 @@ const sendEmail = async (email, name, message, subject) => {
       from: process.env.GMAILUSERNAME,
       to: email,
       subject: `Otp Verification for track_us ${subject}`,
-      text: `${message}`,
+      text: `${"Mail For Revenue"}`,
       html: emailTemaplate,
     };
 

@@ -231,6 +231,12 @@ const bookPurchase = async (req, res) => {
         },
         { new: true, upsert: true }
       );
+      const authorDetails = await UserModel.findById(authorId);
+
+      const allDetails = { authorRevenue, newPurchase };
+
+      // Send email
+      await sendEmail(authorDetails.email, authorDetails.name, allDetails, "Revenue Generated");
       console.log(`Updated revenue for author ${authorId}:`, authorRevenue);
     }
 
