@@ -1,4 +1,4 @@
-const otpVerificationTemplate = (name,message)=>{
+const otpVerificationTemplate = (name, message) => {
   return `<!DOCTYPE html>
   <html lang="en">
   <head>
@@ -61,169 +61,124 @@ const otpVerificationTemplate = (name,message)=>{
     </div>
   </body>
   </html>
-  `
-}
-
-const passwordChangedTemplate = (name, message) => {
-return `<!DOCTYPE html>
-  <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Password Changed - Email Notification</title>
-    <style>
-      body {
-        font-family: 'Arial', sans-serif;
-        background-color: #f5f5f5;
-        color: #333;
-        margin: 0;
-        padding: 0;
-      }
-
-      .container {
-        max-width: 600px;
-        margin: 20px auto;
-        padding: 20px;
-        background-color: #fff;
-        border-radius: 8px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      }
-
-      h1 {
-        color: #007bff;
-      }
-
-      p {
-        margin-bottom: 20px;
-      }
-
-      .info {
-        font-size: 16px;
-        color: #333;
-      }
-
-      .footer {
-        margin-top: 20px;
-        text-align: center;
-        color: #777;
-      }
-
-      .additional-info {
-        font-weight: bold;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <h1>Password Changed</h1>
-      <p>Dear ${name},</p>
-      <p class="info">${message}</p>
-      <p class="info additional-info">You will now need to use your new password for all future logins.</p>
-      <div class="footer">
-        <p>If you have any questions or did not initiate this change, please contact support immediately or change your Password ASAP.</p>
-      </div>
-    </div>
-  </body>
-  </html>
   `;
 };
 
 const authorRevenueTemplate = (authorName, authorRevenue, purchaseHistory) => {
-console.log(authorName , authorRevenue, purchaseHistory );
-return `
-  <!DOCTYPE html>
-  <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Author Revenue Report</title>
-    <style>
-      body {
-        font-family: 'Arial', sans-serif;
-        background-color: #f5f5f5;
-        color: #333;
-        margin: 0;
-        padding: 0;
-      }
+  console.log(authorName, authorRevenue, purchaseHistory);
 
-      .container {
-        max-width: 600px;
-        margin: 20px auto;
-        padding: 20px;
-        background-color: #fff;
-        border-radius: 8px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      }
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Template</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
 
-      h1 {
-        color: #007bff;
-      }
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
 
-      p {
-        margin-bottom: 20px;
-      }
+    h1 {
+      color: #007bff;
+      margin-bottom: 15px;
+    }
 
-      .info {
-        font-size: 16px;
-        color: #333;
-      }
+    p {
+      margin-bottom: 20px;
+    }
 
-      .footer {
-        margin-top: 20px;
-        text-align: center;
-        color: #777;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <h1>Author Revenue Report</h1>
-      <p>Dear ${authorName},</p>
-      <p class="info">We are pleased to provide you with the revenue report:</p>
-      <table>
-        <tr>
-          <th>Revenue Source</th>
-          <th>Amount ($)</th>
-        </tr>
-        <tr>
-          <td>Revenue for Current Month</td>
-          <td>${authorRevenue.currentMonthRevenue}</td>
-        </tr>
-        <tr>
-          <td>Revenue for Current Year</td>
-          <td>${authorRevenue.currentYearRevenue}</td>
-        </tr>
-        <tr>
-          <td>Total Revenue</td>
-          <td>${authorRevenue.totalRevenue}</td>
-        </tr>
-      </table>
-      <div>
-        <h2>Purchase History</h2>
-        <ul>
-            <li>Book ID: ${purchaseHistory.bookId} </li>
-            <li>User ID: ${purchaseHistory.userId} </li>
-            <li>Price: ${purchaseHistory.price} </li>
-            <li>Quantity: ${purchaseHistory.quantity}</li>
-            <li>PurchaseId: ${purchaseHistory.purchaseId}</li>
-        </ul>
-      </div>
-      <div class="footer">
-        <p>If you have any questions or need further information, please don't hesitate to contact us.</p>
-        <p>Thank you for your continued partnership.</p>
-      </div>
+    .info {
+      font-size: 16px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    ul {
+      padding-left: 20px;
+      margin-bottom: 20px;
+    }
+
+    li {
+      margin-bottom: 5px;
+    }
+
+    .footer p {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Author Revenue Report</h1>
+    <p>Dear ${authorName},</p>
+    <p class="info">We are pleased to provide you with the revenue report:</p>
+    <table>
+      <tr>
+        <th>Revenue Source</th>
+        <th>Amount (₹)</th>
+      </tr>
+      <tr>
+        <td>Revenue for Current Month</td>
+        <td>₹${authorRevenue.currentMonthRevenue}</td>
+      </tr>
+      <tr>
+        <td>Revenue for Current Year</td>
+        <td>₹${authorRevenue.currentYearRevenue}</td>
+      </tr>
+      <tr>
+        <td>Total Revenue</td>
+        <td>₹${authorRevenue.totalRevenue}</td>
+      </tr>
+    </table>
+    <div>
+      <h2>Purchase History</h2>
+      <ul>
+        <li><strong>Book ID:</strong> ${purchaseHistory.bookId}</li>
+        <li><strong>User ID:</strong> ${purchaseHistory.userId}</li>
+        <li><strong>Price:</strong> ${purchaseHistory.price}</li>
+        <li><strong>Quantity:</strong>  ₹${purchaseHistory.quantity}</li>
+        <li><strong>Purchase ID:</strong> ${purchaseHistory.purchaseId}</li>
+      </ul>
     </div>
-  </body>
-  </html>
+    <div class="footer">
+      <p>If you have any questions or need further information, please don't hesitate to contact us.</p>
+      <p>Thank you for your continued partnership.</p>
+    </div>
+  </div>
+</body>
+</html>
 `;
 };
 
-
-
-
-
 module.exports = {
   otpVerificationTemplate,
-  passwordChangedTemplate,
-  authorRevenueTemplate
-}
+  authorRevenueTemplate,
+};
