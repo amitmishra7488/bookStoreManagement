@@ -17,7 +17,7 @@ app.use('/author',authorRoutes)
 
 // Server Route
 app.get('/', (req, res) => {
-  res.json({ message: 'Example route response' });
+  res.json({ message: 'book store server is running' });
 });
 mongoose.set("strictQuery", true);
 const connectToDb = async () => {
