@@ -153,29 +153,37 @@ Admin routes handle operations specific to admin users, such as processing role 
 - **Middleware**: `auth`, `isAdmin`
 - **Controller**: `processRoleChangeRequest`
 
-
 # Bulk Email Notification Feature
+
 ## Overview
 The bulk email notification feature allows sending notifications to all retail users about new book releases. To prevent overwhelming the email server and to comply with service provider limits, the feature implements a batching mechanism where emails are sent in batches with a delay between each batch.
 
 ## Implementation Details
 The implementation of the bulk email notification feature involves the following steps:
 
-1. **Retrieve All Users**: Fetch all retail users from the database using the UserModel.
-
+1. **Fetch All Users**: Fetch all retail users from the database using the UserModel.
 2. **Batching Users**: Divide the list of users into smaller batches to send emails in manageable chunks. The batch size is configured to limit the number of emails sent simultaneously.
-
 3. **Sending Emails with Delay**: Iterate through each batch of users and send emails with a delay between each batch. This delay ensures that the email server is not overloaded and complies with the service provider's rate limits.
-
-4. **Handling Rate Limit**: To prevent exceeding the service provider's rate limit, the feature sends emails in batches and waits for a specified delay between each batch. In this implementation, a delay of 60 seconds (1 minute) is used between batches to send up to 100 emails.
+4. **Handling Rate Limit**: To prevent exceeding the service provider's rate limit, the feature sends emails in batches and waits for a specified delay between each batch. In this implementation, a delay of 60 seconds (1 minute) is used between batches to send up to batchSize emails.
 
 ## Code Snippet
 ```javascript
 const UserModel = require("../models/user.model");
+const cron = require("node-cron");
+
+let allUsers = null;
+
+const fetchAllUsers = async () => {
+  console.log("Fetching all users from the database...");
+  allUsers = await UserModel.find();
+};
 
 const bookLaunchNotification = async (message) => {
   try {
-    const allUsers = await UserModel.find();
+    // Fetch all users if not already fetched
+    if (!allUsers) {
+      await fetchAllUsers();
+    }
 
     const batchSize = 2;
     const batches = [];
@@ -183,11 +191,22 @@ const bookLaunchNotification = async (message) => {
       batches.push(allUsers.slice(i, i + batchSize));
     }
 
-    // Send emails in batches with a delay of 1 minute
-    for (let batch of batches) {
-      await sendEmailsWithDelay(message, batch);
-      await new Promise((resolve) => setTimeout(resolve, 60000)); // Delay for 60 seconds (60 seconds * 1000 milliseconds)
-    }
+    let currentBatchIndex = 0;
+
+    // Send emails for the first batch immediately
+    sendEmailsWithDelay(message, batches[currentBatchIndex]);
+    currentBatchIndex++;
+
+    // Schedule cron job to send emails for remaining batches
+    const cronJob = cron.schedule("* * * * *", () => {
+      const currentBatch = batches[currentBatchIndex];
+      if (currentBatch) {
+        sendEmailsWithDelay(message, currentBatch);
+        currentBatchIndex++;
+      } else {
+        cronJob.stop(); // Stop cron job when all batches are processed
+      }
+    });
 
     return { message: "Mail Sent To All Users Successfully" };
   } catch (error) {
@@ -195,22 +214,19 @@ const bookLaunchNotification = async (message) => {
   }
 };
 
-async function sendEmailsWithDelay(message, users) {
+const sendEmailsWithDelay = (message, users) => {
   try {
-    console.log(
-      message,
-      "sent to -->",
-      users.map((user) => user.email)
-    );
+    console.log(message, "sent to -->", users.map((user) => user.email));
   } catch (error) {
     console.error("Error sending emails:", error);
   }
-}
+};
 
 module.exports = {
   bookLaunchNotification
 };
 ```
+
 # Revenue Calculation Logic
 ## Overview
 The revenue calculation logic is responsible for computing the total monthly and yearly revenue generated from book purchases by an author. This logic is utilized after each book purchase to update the author's revenue records and send notifications accordingly.
