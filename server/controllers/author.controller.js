@@ -13,7 +13,6 @@ const launchBook = async (req, res) => {
     if (additionalAuthors) {
       authors = [firstAuthor, ...additionalAuthors];
     }
-    console.log(additionalAuthors);
     // Create a new book document
     const newBook = new BookModel({
       authors,
@@ -42,8 +41,8 @@ const launchBook = async (req, res) => {
       price: price,
     }
 
-    const mailReult = await bookLaunchNotification(bookData)
-    res.status(201).json({ message: "Book added successfully", book: newBook , notification : mailReult });
+    await bookLaunchNotification(bookData)
+    res.status(201).json({ message: "Book added successfully", book: newBook});
 
     
   } catch (error) {
