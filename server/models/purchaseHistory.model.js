@@ -31,29 +31,6 @@ const purchaseHistorySchema = new mongoose.Schema({
   }
 });
 
-purchaseHistorySchema.pre('validate', async function(next) {
-  try {
-
-    const currentDate = new Date();
-    const year = currentDate.getFullYear();
-    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-
-    // Get the number of existing purchase history documents
-    const count = await this.constructor.countDocuments();
-
-    // Increment the numeric ID based on the count
-    const numericId = count + 1;
-
-    // Set the purchaseId for the current document
-    this.purchaseId = `${year}-${month}-${numericId}`;
-    
-    next();
-  } catch (error) {
-    next(error);
-  }
-});
-
-
   
 
 const PurchaseHistoryModel = mongoose.model('PurchaseHistory', purchaseHistorySchema);
