@@ -9,7 +9,7 @@ const BookModel = require("../models/book.models");
 const PurchaseHistoryModel = require("../models/purchaseHistory.model");
 const AuthorRevenueModel = require("../models/authorRevenueModel");
 const calculateTotalMonthlyAndYearlyRevenue = require("../utils/monthlyAndYearlyRevenue");
-
+const mongoose = require('mongoose');
 // User Registeration
 const registerTempUser = async (req, res) => {
   try {
@@ -173,7 +173,87 @@ const createRoleChangeRequest = async (req, res) => {
 };
 
 // Book Purchase 
+// const bookPurchase = async (req, res) => {
+//   try {
+//     const { quantity } = req.body;
+//     const bookID = req.params.bookID;
+//     const userId = req.userId;
+
+//     // Validate quantity
+//     if (!Number.isInteger(quantity) || quantity <= 0) {
+//       return res.status(400).json({ error: "Invalid quantity" });
+//     }
+
+//     // Verify if the requested book exists
+//     const existedBook = await BookModel.findById(bookID);
+//     if (!existedBook) {
+//       return res.status(400).json({ error: "Book doesn't exist" });
+//     }
+
+//     // Check if requested quantity is available
+//     if (existedBook.quantityAvailable < quantity) {
+//       return res.status(400).json({ error: "Requested quantity not available" });
+//     }
+
+//     // Calculate total price
+//     const totalPrice = existedBook.price * quantity;
+
+//     // Update sellCount of the book and decrease quantityAvailable
+//     existedBook.sellCount += quantity;
+//     await existedBook.save();
+//     // Create a new purchase history record
+//     const newPurchase = new PurchaseHistoryModel({
+//       bookId: bookID,
+//       userId: userId,
+//       purchaseDate: new Date(),
+//       price: totalPrice,
+//       quantity: quantity
+//     });
+//     await newPurchase.save();
+
+
+//     // Iterate over each author's ID in existedBook.authors
+//     for (const authorId of existedBook.authors) {
+//       // Find the total monthly revenue for the author
+//       const { totalMonthlyRevenue, totalYearlyRevenue } = await calculateTotalMonthlyAndYearlyRevenue(authorId.toString());
+
+//       // Find the author's revenue
+//       const authorRevenue = await AuthorRevenueModel.findOneAndUpdate(
+//         { author: authorId },
+//         {
+//           $inc: {
+//             totalRevenue: totalPrice,
+//           },
+//           $set: {
+//             currentMonthRevenue: totalMonthlyRevenue,
+//             currentYearRevenue: totalYearlyRevenue
+//           }
+//         },
+//         { new: true, upsert: true }
+//       );
+//       const authorDetails = await UserModel.findById(authorId);
+
+//       const allDetails = { authorRevenue, newPurchase };
+
+//       // Send email
+//       await sendEmail(authorDetails.email, authorDetails.name, allDetails, "Revenue Generated");
+//       console.log(`Updated revenue for author ${authorId}:`, authorRevenue);
+//     }
+
+//     res.status(200).json({
+//       message: "Book purchased successfully",
+//       purchase: newPurchase
+//     });
+//   } catch (error) {
+//     console.error("Error purchasing book:", error);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// };
+
 const bookPurchase = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  
   try {
     const { quantity } = req.body;
     const bookID = req.params.bookID;
@@ -185,7 +265,7 @@ const bookPurchase = async (req, res) => {
     }
 
     // Verify if the requested book exists
-    const existedBook = await BookModel.findById(bookID);
+    const existedBook = await BookModel.findById(bookID).session(session);
     if (!existedBook) {
       return res.status(400).json({ error: "Book doesn't exist" });
     }
@@ -200,56 +280,52 @@ const bookPurchase = async (req, res) => {
 
     // Update sellCount of the book and decrease quantityAvailable
     existedBook.sellCount += quantity;
-    await existedBook.save();
+    await existedBook.save({ session });
+
+    // Generate purchaseId
+    const currentDate = new Date();
+    const year = currentDate.getFullYear();
+    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+    const count = await PurchaseHistoryModel.countDocuments().session(session);
+    const numericId = count + 1;
+    const purchaseId = `${year}-${month}-${numericId}`;
+
     // Create a new purchase history record
     const newPurchase = new PurchaseHistoryModel({
+      purchaseId: purchaseId,
       bookId: bookID,
       userId: userId,
-      purchaseDate: new Date(),
+      purchaseDate: currentDate,
       price: totalPrice,
       quantity: quantity
     });
-    await newPurchase.save();
+    await newPurchase.save({ session });
 
-
-    // Iterate over each author's ID in existedBook.authors
-    for (const authorId of existedBook.authors) {
-      // Find the total monthly revenue for the author
-      const { totalMonthlyRevenue, totalYearlyRevenue } = await calculateTotalMonthlyAndYearlyRevenue(authorId.toString());
-
-      // Find the author's revenue
-      const authorRevenue = await AuthorRevenueModel.findOneAndUpdate(
-        { author: authorId },
-        {
-          $inc: {
-            totalRevenue: totalPrice,
-          },
-          $set: {
-            currentMonthRevenue: totalMonthlyRevenue,
-            currentYearRevenue: totalYearlyRevenue
-          }
-        },
-        { new: true, upsert: true }
-      );
-      const authorDetails = await UserModel.findById(authorId);
-
-      const allDetails = { authorRevenue, newPurchase };
-
-      // Send email
-      await sendEmail(authorDetails.email, authorDetails.name, allDetails, "Revenue Generated");
-      console.log(`Updated revenue for author ${authorId}:`, authorRevenue);
-    }
+    // Commit the transaction
+    await session.commitTransaction();
+    session.endSession();
 
     res.status(200).json({
       message: "Book purchased successfully",
       purchase: newPurchase
     });
   } catch (error) {
+    // Retry transaction on WriteConflict error
+    if (error.code === 112) {
+      await session.abortTransaction();
+      session.endSession();
+      console.error("Transaction aborted due to WriteConflict error, retrying...");
+      return bookPurchase(req, res); // Retry the transaction
+    }
+
+    // Abort the transaction on other errors
+    await session.abortTransaction();
+    session.endSession();
+
     console.error("Error purchasing book:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
 
 module.exports = {
   registerTempUser,
