@@ -9,7 +9,9 @@ const BookModel = require("../models/book.models");
 const PurchaseHistoryModel = require("../models/purchaseHistory.model");
 const AuthorRevenueModel = require("../models/authorRevenueModel");
 const calculateTotalMonthlyAndYearlyRevenue = require("../utils/monthlyAndYearlyRevenue");
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
+const { ObjectId } = require("mongodb");
+const calculateTotalRevenueForAuthor = require("../utils/monthlyAndYearlyRevenue");
 // User Registeration
 const registerTempUser = async (req, res) => {
   try {
@@ -31,7 +33,7 @@ const registerTempUser = async (req, res) => {
           (tempExistingUser.createdAt.getTime() +
             resendWindow -
             currentTime.getTime()) /
-          (60 * 1000)
+            (60 * 1000)
         );
 
         return res.status(201).json({
@@ -48,26 +50,21 @@ const registerTempUser = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      otp: otp
+      otp: otp,
     });
 
-    await sendEmail(
-      email,
-      name,
-      `Your OTP is: ${otp}`,
-      "Account Registration"
-    );
+    await sendEmail(email, name, `Your OTP is: ${otp}`, "Account Registration");
     await newTempUser.save();
 
-    res
-      .status(201)
-      .json({
-        message: "Temporary user created successfully",
-        tempUser: newTempUser,
-      });
+    res.status(201).json({
+      message: "Temporary user created successfully",
+      tempUser: newTempUser,
+    });
   } catch (error) {
     console.error("Error registering tempUser:", error);
-    res.status(500).json({ error: 'Internal server error', message: error.message });
+    res
+      .status(500)
+      .json({ error: "Internal server error", message: error.message });
   }
 };
 
@@ -108,11 +105,13 @@ const registerVerifiedUser = async (req, res) => {
       message: "User registered successfully",
     });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error', message: error.message });
+    res
+      .status(500)
+      .json({ error: "Internal server error", message: error.message });
   }
 };
 
-// User Login 
+// User Login
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -132,7 +131,9 @@ const login = async (req, res) => {
       .status(200)
       .json({ message: "Login successful", user: user, token: token });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error', message: error.message });
+    res
+      .status(500)
+      .json({ error: "Internal server error", message: error.message });
   }
 };
 
@@ -143,18 +144,27 @@ const createRoleChangeRequest = async (req, res) => {
     const { requestedToEmail, requestedRole } = req.body;
 
     // Find the user by email
-    const requestedToUser = await UserModel.findOne({ email: requestedToEmail });
+    const requestedToUser = await UserModel.findOne({
+      email: requestedToEmail,
+    });
     if (!requestedToUser) {
-      return res.status(404).json({ error: 'Requested user not found' });
+      return res.status(404).json({ error: "Requested user not found" });
     }
-    if (requestedToUser.role !== 'admin') {
-      return res.status(403).json({ error: 'Forbidden: Only admin users can perform this action so send your request only to admin' });
+    if (requestedToUser.role !== "admin") {
+      return res.status(403).json({
+        error:
+          "Forbidden: Only admin users can perform this action so send your request only to admin",
+      });
     }
 
     // Extract requestedBy ID from the JWT token
-    const existedRequest = await RoleChangeRequestModel.findOne({ requestedBy: req.userId });
+    const existedRequest = await RoleChangeRequestModel.findOne({
+      requestedBy: req.userId,
+    });
     if (existedRequest) {
-      return res.status(400).json({ error: 'Request Already Sent , Contact Admin or Request After 7 days' });
+      return res.status(400).json({
+        error: "Request Already Sent , Contact Admin or Request After 7 days",
+      });
     }
     const requestedBy = req.userId;
     // Create a new role change request
@@ -165,95 +175,21 @@ const createRoleChangeRequest = async (req, res) => {
     });
     await roleChangeRequest.save();
 
-    res.status(201).json({ message: 'Role change request submitted successfully' });
+    res
+      .status(201)
+      .json({ message: "Role change request submitted successfully" });
   } catch (error) {
-    console.error('Error creating role change request:', error);
-    res.status(500).json({ error: 'Internal server error', message: error.message });
+    console.error("Error creating role change request:", error);
+    res
+      .status(500)
+      .json({ error: "Internal server error", message: error.message });
   }
 };
-
-// Book Purchase 
-// const bookPurchase = async (req, res) => {
-//   try {
-//     const { quantity } = req.body;
-//     const bookID = req.params.bookID;
-//     const userId = req.userId;
-
-//     // Validate quantity
-//     if (!Number.isInteger(quantity) || quantity <= 0) {
-//       return res.status(400).json({ error: "Invalid quantity" });
-//     }
-
-//     // Verify if the requested book exists
-//     const existedBook = await BookModel.findById(bookID);
-//     if (!existedBook) {
-//       return res.status(400).json({ error: "Book doesn't exist" });
-//     }
-
-//     // Check if requested quantity is available
-//     if (existedBook.quantityAvailable < quantity) {
-//       return res.status(400).json({ error: "Requested quantity not available" });
-//     }
-
-//     // Calculate total price
-//     const totalPrice = existedBook.price * quantity;
-
-//     // Update sellCount of the book and decrease quantityAvailable
-//     existedBook.sellCount += quantity;
-//     await existedBook.save();
-//     // Create a new purchase history record
-//     const newPurchase = new PurchaseHistoryModel({
-//       bookId: bookID,
-//       userId: userId,
-//       purchaseDate: new Date(),
-//       price: totalPrice,
-//       quantity: quantity
-//     });
-//     await newPurchase.save();
-
-
-//     // Iterate over each author's ID in existedBook.authors
-//     for (const authorId of existedBook.authors) {
-//       // Find the total monthly revenue for the author
-//       const { totalMonthlyRevenue, totalYearlyRevenue } = await calculateTotalMonthlyAndYearlyRevenue(authorId.toString());
-
-//       // Find the author's revenue
-//       const authorRevenue = await AuthorRevenueModel.findOneAndUpdate(
-//         { author: authorId },
-//         {
-//           $inc: {
-//             totalRevenue: totalPrice,
-//           },
-//           $set: {
-//             currentMonthRevenue: totalMonthlyRevenue,
-//             currentYearRevenue: totalYearlyRevenue
-//           }
-//         },
-//         { new: true, upsert: true }
-//       );
-//       const authorDetails = await UserModel.findById(authorId);
-
-//       const allDetails = { authorRevenue, newPurchase };
-
-//       // Send email
-//       await sendEmail(authorDetails.email, authorDetails.name, allDetails, "Revenue Generated");
-//       console.log(`Updated revenue for author ${authorId}:`, authorRevenue);
-//     }
-
-//     res.status(200).json({
-//       message: "Book purchased successfully",
-//       purchase: newPurchase
-//     });
-//   } catch (error) {
-//     console.error("Error purchasing book:", error);
-//     res.status(500).json({ error: "Internal server error" });
-//   }
-// };
 
 const bookPurchase = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
-  
+
   try {
     const { quantity } = req.body;
     const bookID = req.params.bookID;
@@ -270,11 +206,6 @@ const bookPurchase = async (req, res) => {
       return res.status(400).json({ error: "Book doesn't exist" });
     }
 
-    // Check if requested quantity is available
-    if (existedBook.quantityAvailable < quantity) {
-      return res.status(400).json({ error: "Requested quantity not available" });
-    }
-
     // Calculate total price
     const totalPrice = existedBook.price * quantity;
 
@@ -285,7 +216,7 @@ const bookPurchase = async (req, res) => {
     // Generate purchaseId
     const currentDate = new Date();
     const year = currentDate.getFullYear();
-    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+    const month = String(currentDate.getMonth() + 1).padStart(2, "0");
     const count = await PurchaseHistoryModel.countDocuments().session(session);
     const numericId = count + 1;
     const purchaseId = `${year}-${month}-${numericId}`;
@@ -297,24 +228,65 @@ const bookPurchase = async (req, res) => {
       userId: userId,
       purchaseDate: currentDate,
       price: totalPrice,
-      quantity: quantity
+      quantity: quantity,
     });
     await newPurchase.save({ session });
 
     // Commit the transaction
     await session.commitTransaction();
     session.endSession();
+    // Iterate over each author's ID in existedBook.authors
+    for (const authorId of existedBook.authors) {
+      console.log("authorId", authorId);
+      const {
+        totalValueCurrentMonth,
+        totalValueCurrentYear,
+        totalValueOverall,
+      } = await calculateTotalRevenueForAuthor(authorId);
+
+      // Find the author's revenue
+      const authorDetails = await UserModel.findById(authorId);
+      const authorRevenue = await AuthorRevenueModel.findOneAndUpdate(
+        { author: authorId },
+        {
+          $set: {
+            totalRevenue: totalValueOverall[0].totalValue,
+            currentMonthRevenue: totalValueCurrentMonth[0].totalValue,
+            currentYearRevenue: totalValueCurrentYear[0].totalValue,
+          },
+        },
+        { new: true, upsert: true }
+      );
+
+      const allDetails = { authorRevenue, newPurchase };
+
+      // Send email
+      await sendEmail(
+        authorDetails.email,
+        authorDetails.name,
+        allDetails,
+        "Revenue Generated"
+      );
+      console.log(
+        `Updated revenue for author ${authorId}:`,
+        totalValueCurrentMonth,
+        totalValueCurrentYear,
+        totalValueOverall
+      );
+    }
 
     res.status(200).json({
       message: "Book purchased successfully",
-      purchase: newPurchase
+      purchase: newPurchase,
     });
   } catch (error) {
     // Retry transaction on WriteConflict error
     if (error.code === 112) {
       await session.abortTransaction();
       session.endSession();
-      console.error("Transaction aborted due to WriteConflict error, retrying...");
+      console.error(
+        "Transaction aborted due to WriteConflict error, retrying..."
+      );
       return bookPurchase(req, res); // Retry the transaction
     }
 
@@ -332,5 +304,6 @@ module.exports = {
   registerVerifiedUser,
   login,
   createRoleChangeRequest,
-  bookPurchase
+  bookPurchase,
+  calculateTotalRevenueForAuthor,
 };
