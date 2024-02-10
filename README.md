@@ -227,6 +227,37 @@ module.exports = {
 };
 ```
 
+# Book Purchase Function
+
+This function handles the purchase of a book, updating relevant data in the database and sending email notifications to authors about the revenue generated.
+
+## Input Parameters
+- `req`: Request object containing information about the purchase request.
+- `res`: Response object for sending HTTP responses.
+
+## Steps
+1. **Start Transaction**: Begin a session and start a transaction.
+2. **Request Data**: Retrieve necessary data from the request object (`quantity`, `bookID`, `userId`).
+3. **Validate Quantity**: Check if the quantity is a positive integer.
+4. **Verify Book Existence**: Check if the requested book exists in the database.
+5. **Calculate Total Price**: Calculate the total price of the purchase.
+6. **Update Book Data**: Increment `sellCount` and decrement `quantityAvailable` of the book.
+7. **Generate Purchase ID**: Generate a unique purchase ID based on the current date and existing purchase count.
+8. **Create Purchase History**: Save a new purchase history record in the database.
+9. **Commit Transaction**: Commit the transaction to save changes permanently.
+10. **Update Author Revenue**: Iterate over each author of the purchased book, calculate their total revenue, and update their revenue records.
+11. **Send Email Notifications**: Send email notifications to authors about the revenue generated.
+12. **Handle Errors**: Handle any errors that occur during the process, retrying the transaction in case of a write conflict error.
+
+## Error Handling
+- If a write conflict error occurs, the transaction is retried.
+- Other errors lead to aborting the transaction and returning an internal server error response.
+
+## Response
+- If successful, returns a 200 status with a success message and details of the purchase.
+- In case of errors, returns an appropriate error status with error details.
+
+
 # Revenue Calculation Logic
 ## Overview
 The revenue calculation logic is responsible for computing the total monthly and yearly revenue generated from book purchases by an author. This logic is utilized after each book purchase to update the author's revenue records and send notifications accordingly.
