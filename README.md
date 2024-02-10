@@ -241,7 +241,7 @@ This function handles the purchase of a book, updating relevant data in the data
 3. **Validate Quantity**: Check if the quantity is a positive integer.
 4. **Verify Book Existence**: Check if the requested book exists in the database.
 5. **Calculate Total Price**: Calculate the total price of the purchase.
-6. **Update Book Data**: Increment `sellCount` and decrement `quantityAvailable` of the book.
+6. **Update Book Data**: Increment `sellCount` of Book.
 7. **Generate Purchase ID**: Generate a unique purchase ID based on the current date and existing purchase count.
 8. **Create Purchase History**: Save a new purchase history record in the database.
 9. **Commit Transaction**: Commit the transaction to save changes permanently.
